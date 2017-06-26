@@ -1,0 +1,60 @@
+<link rel="import" href="/plugins/shared-styles/shared-styles.html">
+<dom-module id="face-item">
+  <template>
+    <style include="shared-styles"></style>
+    <h1>Face recognition</h1>
+    <h2>{{msg}}</h2>
+  </template>
+  <script>
+    (() => {
+      class Face extends Polymer.Element {
+        static get is () { return 'face-item' }
+
+        static get properties () {
+          return {
+            msg: String,
+            socket: Object,
+            socket_url: String
+          }
+        }
+
+        connectedCallback () {
+          super.connectedCallback()
+
+          this._createSocket();
+        }
+
+        _createSocket () {
+          this.msg = 'Connecting to ' + this.socket_url;
+
+          this.socket = new WebSocket(this.socket_url)
+          this.socket.binaryType = "arraybuffer"
+          this.socket.onopen = this._onOpen.bind(this)
+          this.socket.onmessage = this._onMessage.bind(this)
+          this.socket.onerror = this._onError.bind(this)
+        }
+
+        _onOpen (event) {
+          this.msg = 'Connected'
+        }
+
+        _onMessage (event) {
+          const data = JSON.parse(event.data)
+          if (data.type === 'RECOGNIZED') {
+            this.msg = 'Reconnu : ' + data.name;
+          }
+        }
+
+        _onError (event) {
+          this.msg = 'Error when connecting to ' + this.socket_url;
+        }
+
+        _send (message) {
+          this.socket.send(message);
+        }
+      }
+
+      customElements.define(Face.is, Face)
+    })()
+  </script>
+</dom-module>
